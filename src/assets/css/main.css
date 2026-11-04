@@ -1,0 +1,91 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* Lux — dark blue / violet */
+:root,
+.dark {
+  color-scheme: dark;
+
+  /* Neutral palette: cool whites through deep navy */
+  --ui-color-neutral-50: #f0f4ff;
+  --ui-color-neutral-100: #e0e7f7;
+  --ui-color-neutral-200: #c4cfe6;
+  --ui-color-neutral-300: #a5b4d1;
+  --ui-color-neutral-400: #8192b3;
+  --ui-color-neutral-500: #627393;
+  --ui-color-neutral-600: #485774;
+  --ui-color-neutral-700: #303d57;
+  --ui-color-neutral-800: #202b41;
+  --ui-color-neutral-900: #121b2d;
+  --ui-color-neutral-950: #090f1c;
+
+  /* Primary: electric blue */
+  --ui-color-primary-50: #eff6ff;
+  --ui-color-primary-100: #dceaff;
+  --ui-color-primary-200: #bdd8ff;
+  --ui-color-primary-300: #93bfff;
+  --ui-color-primary-400: #69a5ff;
+  --ui-color-primary-500: #4385f5;
+  --ui-color-primary-600: #3066db;
+  --ui-color-primary-700: #294fb1;
+  --ui-color-primary-800: #263f88;
+  --ui-color-primary-900: #223565;
+  --ui-color-primary-950: #14213f;
+
+  /* Secondary: violet */
+  --ui-color-secondary-50: #f5f2ff;
+  --ui-color-secondary-100: #ece5ff;
+  --ui-color-secondary-200: #d9ccff;
+  --ui-color-secondary-300: #c0a8ff;
+  --ui-color-secondary-400: #a78aff;
+  --ui-color-secondary-500: #8b65ed;
+  --ui-color-secondary-600: #744bd1;
+  --ui-color-secondary-700: #5e3bab;
+  --ui-color-secondary-800: #4a3282;
+  --ui-color-secondary-900: #392961;
+  --ui-color-secondary-950: #23183f;
+
+  /* Main semantic colors */
+  --ui-primary: var(--ui-color-primary-400);
+  --ui-secondary: var(--ui-color-secondary-400);
+  --ui-success: #5ed6b3;
+  --ui-info: #6acbf0;
+  --ui-warning: #edc078;
+  --ui-error: #f1849b;
+
+  /* Text hierarchy */
+  --ui-text-dimmed: #7182a3;
+  --ui-text-muted: #91a0bd;
+  --ui-text-toned: #b3bfd6;
+  --ui-text: #d6def0;
+  --ui-text-highlighted: #f0f4ff;
+  --ui-text-inverted: #090f1c;
+
+  /* Surfaces: keep menus and dialogs readable */
+  --ui-bg: #090f1c;
+  --ui-bg-muted: #101829;
+  --ui-bg-elevated: #172237;
+  --ui-bg-accented: #22304a;
+  --ui-bg-inverted: #e0e7f7;
+
+  /* Borders */
+  --ui-border-muted: #1b263b;
+  --ui-border: #293750;
+  --ui-border-accented: #3b4c6c;
+  --ui-border-inverted: #c4cfe6;
+
+  /* Nuxt UI's base radius */
+  --ui-radius: 0.375rem;
+
+  /* Lux-specific glass variables */
+  --lux-glass-bg: rgb(9 15 28 / 68%);
+  --lux-glass-header: rgb(16 24 41 / 48%);
+  --lux-glass-border: rgb(165 190 255 / 12%);
+  --lux-glass-blur: 18px;
+  --lux-panel-radius: 12px;
+
+  /* Interaction colors */
+  --lux-hover: rgb(105 165 255 / 8%);
+  --lux-selected: rgb(105 165 255 / 16%);
+  --lux-selected-border: rgb(105 165 255 / 35%);
+}

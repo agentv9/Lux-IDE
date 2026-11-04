@@ -1,0 +1,32 @@
+[
+  {
+    "id": "javascript",
+    "grammar": "javascript",
+    "extensions": [".js", ".mjs", ".cjs"]
+  },
+  {
+    "id": "json",
+    "grammar": "json",
+    "extensions": [".json"]
+  },
+  {
+    "id": "html",
+    "grammar": "html",
+    "extensions": [".html"]
+  },
+  {
+    "id": "typescript",
+    "grammar": "typescript",
+    "extensions": [".ts", ".mts", ".cts"]
+  },
+  {
+    "id": "vue",
+    "grammar": "vue",
+    "extensions": [".vue"]
+  },
+  {
+    "id": "rust",
+    "grammar": "rust",
+    "extensions": [".rs"]
+  }
+]

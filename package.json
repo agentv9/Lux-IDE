@@ -1,0 +1,39 @@
+{
+  "name": "lux",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@nuxt/ui": "^4.12.0",
+    "@tabler/icons-vue": "^3.50.0",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "~2",
+    "@tauri-apps/plugin-fs": "~2",
+    "@tauri-apps/plugin-opener": "^2",
+    "@vueuse/core": "^15.0.0",
+    "@vueuse/integrations": "^15.0.0",
+    "golden-layout": "^2.6.0",
+    "monaco-editor": "^0.57.0",
+    "sortablejs": "^1.15.7",
+    "tailwindcss": "^4.3.3",
+    "vue": "^3.5.13",
+    "vue-router": "4"
+  },
+  "devDependencies": {
+    "@shikijs/monaco": "^4.6.0",
+    "@tauri-apps/cli": "^2",
+    "@types/sortablejs": "^1.15.9",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "shiki": "^4.6.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16",
+    "vite-plugin-monaco-editor": "^1.1.0",
+    "vue-tsc": "^3.3.5"
+  }
+}
