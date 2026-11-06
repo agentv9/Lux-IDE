@@ -59,7 +59,7 @@ onBeforeUnmount(() => {
 }
 </style>
 <style>
-Global CSS */ html,
+html,
 body,
 #app {
   width: 100%;

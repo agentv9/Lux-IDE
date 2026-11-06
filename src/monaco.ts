@@ -1,5 +1,8 @@
 import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/editor/editor.worker?worker";
+import JsonWorker from "monaco-editor/language/json/json.worker?worker";
+import HtmlWorker from "monaco-editor/language/html/html.worker?worker";
+import CssWorker from "monaco-editor/language/css/css.worker?worker";
 import { shikiToMonaco } from "@shikijs/monaco";
 import { createHighlighter, type BundledLanguage } from "shiki";
 import definitions from "./language-definitions.json";
@@ -14,7 +17,10 @@ interface LanguageDefinition {
 const languages = definitions as LanguageDefinition[];
 
 self.MonacoEnvironment = {
-  getWorker() {
+  getWorker(_moduleId, label) {
+    if (label === "json") return new JsonWorker();
+    if (label === "html" || label === "handlebars" || label === "razor") return new HtmlWorker();
+    if (label === "css" || label === "scss" || label === "less") return new CssWorker();
     return new EditorWorker();
   },
 };

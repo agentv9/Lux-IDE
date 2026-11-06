@@ -4,10 +4,12 @@ import { IconLayoutColumns, IconDots } from '@tabler/icons-vue'
 import { monaco, highlightingReady, getLanguage } from '../../monaco'
 import { invoke } from '@tauri-apps/api/core'
 import { emit as emitEvent } from '@tauri-apps/api/event'
+import { connectTypeScript } from '../../typescript'
 
 const props = defineProps<{
     path: string
     active: boolean
+    projectPath: string | null
 }>()
 
 const emit = defineEmits<{
@@ -33,6 +35,22 @@ let model: monaco.editor.ITextModel | undefined
 let changeListener: monaco.IDisposable | undefined
 let savedVersion: number | undefined
 let unmounted = false
+let languageService: monaco.IDisposable | undefined
+const languageError = ref('')
+
+async function connectLanguageService() {
+    if (!model || unmounted) return
+    languageService?.dispose()
+    languageService = undefined
+    languageError.value = ''
+    try {
+        languageService = await connectTypeScript(model, props.projectPath, message => { languageError.value = message })
+        if (unmounted) languageService?.dispose()
+    } catch (error) {
+        languageError.value = String(error)
+        console.error('Could not start TypeScript:', error)
+    }
+}
 
 watch(isUnsaved, value => {
     emit('dirty-change', value)
@@ -112,6 +130,7 @@ onMounted(async () => {
         model = monaco.editor.createModel(
             data.content,
             getLanguage(props.path),
+            monaco.Uri.file(props.path),
         )
 
         console.log('Model language:', model.getLanguageId())
@@ -144,6 +163,7 @@ onMounted(async () => {
         )
 
         editor.onDidFocusEditorText(() => emit('activate'))
+        await connectLanguageService()
     } catch (error) {
         console.error('Failed to initialize editor:', error)
     }
@@ -152,6 +172,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
     unmounted = true
     changeListener?.dispose()
+    languageService?.dispose()
     editor?.dispose()
     model?.dispose()
 })
@@ -180,10 +201,23 @@ onBeforeUnmount(() => {
         <div class="editor-body">
             <div ref="editorContainer" class="monaco-container" />
         </div>
+        <div v-if="languageError" class="language-error" :title="languageError">
+            {{ languageError }}
+            <button type="button" @click="connectLanguageService">Retry</button>
+        </div>
     </section>
 </template>
 
 <style scoped>
+.language-error {
+    padding: 4px 12px;
+    color: var(--ui-text-muted);
+    font-size: 12px;
+    max-height: 100px;
+    overflow: auto;
+    white-space: pre-wrap;
+}
+
 .editor-panel {
     display: flex;
     flex-direction: column;

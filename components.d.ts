@@ -15,6 +15,7 @@ declare module 'vue' {
     ExplorerPanel: typeof import('./src/components/workspace/ExplorerPanel.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TerminalPanel: typeof import('./src/components/workspace/TerminalPanel.vue')['default']
     Titlebar: typeof import('./src/components/app/titlebar.vue')['default']
     UApp: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
     UButton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']

@@ -15,7 +15,6 @@
         "decorations": false,
         "title": "lux",
         "shadow": false,
-        "transparent": true,
         "width": 800,
         "height": 600
       }
@@ -25,6 +24,10 @@
     }
   },
   "bundle": {
+    "resources": {
+      "../node_modules/typescript/lib/": "typescript/",
+      "../node_modules/typescript/package.json": "typescript/package.json"
+    },
     "active": true,
     "targets": "all",
     "icon": [

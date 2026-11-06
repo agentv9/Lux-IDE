@@ -42,6 +42,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  'project-opened': [path: string]
   'open-file': [path: string]
   'entry-deleted': [path: string]
   'entry-moved': [entry: MovedEntry]
@@ -161,6 +162,7 @@ async function openProject() {
     files.value = entries.map(toTreeItem)
     refreshTree()
     projectPath.value = selected
+    emit('project-opened', selected)
     expanded.value = []
     contextTarget.value = null
   } catch (error) {
