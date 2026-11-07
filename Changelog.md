@@ -1,4 +1,4 @@
-Implemented terminal, powershell for now
-Implemented tsserver integation for monaco, nothing reusable for future languages still need to implement a proper LSP setup.
-Code NEEDS rectored its very cluttered and hard to follow but it works and thats all that matters for now.
-Lux is now in my opinion a fully usable IDE
+Fixed issue where editor nolonger saved and didnt have tabs properly (i was an idiot)
+Implemented a right click "open with lux" context option with msi installs
+small bit of refactoring
+various changes

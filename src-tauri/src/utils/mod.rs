@@ -13,7 +13,7 @@ pub struct DirectoryEntry {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FileEntry {
-    name: String, 
-    path: String, 
+    name: String,
+    path: String,
     content: String,
 }

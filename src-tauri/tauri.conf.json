@@ -29,13 +29,19 @@
       "../node_modules/typescript/package.json": "typescript/package.json"
     },
     "active": true,
-    "targets": "all",
+    "targets": ["msi"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+     "windows": {
+      "wix": {
+        "fragmentPaths": ["./windows/fragments/context_menu.wxs"],
+        "componentRefs": ["AppContextMenuEntries"]
+      }
+    }
   }
 }

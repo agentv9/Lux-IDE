@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <!-- Define a unique Fragment that Tauri can reference -->
+  <Fragment>
+    <!-- Use TARGETDIR to tap into the installation layout -->
+    <DirectoryRef Id="TARGETDIR">
+      
+      <!-- Component ID matched in tauri.conf.json. Guid="*" auto-generates a unique identifier -->
+      <Component Id="AppContextMenuEntries" Guid="*">
+
+        <!-- ========================================== -->
+        <!-- 2. RIGHT-CLICK A FOLDER ICON               -->
+        <!-- ========================================== -->
+        <RegistryKey Root="HKCU" Key="Software\Classes\Directory\shell\lux" Action="createAndRemoveOnUninstall">
+          <RegistryValue Type="string" Value="Open with lux" />
+          <RegistryValue Type="string" Name="Icon" Value="&quot;[INSTALLDIR]lux.exe&quot;,0" />
+        </RegistryKey>
+        <RegistryKey Root="HKCU" Key="Software\Classes\Directory\shell\lux\command" Action="createAndRemoveOnUninstall">
+          <RegistryValue Type="string" Value="&quot;[INSTALLDIR]lux.exe&quot; &quot;%V&quot;" />
+        </RegistryKey>
+
+        <!-- ========================================== -->
+        <!-- 3. RIGHT-CLICK INSIDE A FOLDER BACKGROUND   -->
+        <!-- ========================================== -->
+        <RegistryKey Root="HKCU" Key="Software\Classes\Directory\Background\shell\lux" Action="createAndRemoveOnUninstall">
+          <RegistryValue Type="string" Value="Open with lux" />
+          <RegistryValue Type="string" Name="Icon" Value="&quot;[INSTALLDIR]lux.exe&quot;,0" />
+        </RegistryKey>
+        <RegistryKey Root="HKCU" Key="Software\Classes\Directory\Background\shell\lux\command" Action="createAndRemoveOnUninstall">
+          <RegistryValue Type="string" Value="&quot;[INSTALLDIR]lux.exe&quot; &quot;%V&quot;" />
+        </RegistryKey>
+
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+</Wix>

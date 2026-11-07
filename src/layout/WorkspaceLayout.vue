@@ -114,7 +114,7 @@ defineExpose({ addWorkspacePanel });
 // Kept outside onMounted so the template can call it.
 
 function findEditor(item: ContentItem): ComponentItem | undefined {
-    if (item instanceof ComponentItem && (item.componentType === "editor" || item.componentType === "empty")) {
+    if (item instanceof ComponentItem && item.componentType === "editor") {
         return item;
     }
     for (const child of item.contentItems) {
@@ -157,6 +157,7 @@ function openFile(path: string) {
         });
         if (existingTab instanceof ComponentItem) {
             editorGroup.setActiveComponentItem(existingTab, true);
+            activateFile(path);
             return;
         }
     }
@@ -170,9 +171,10 @@ function openFile(path: string) {
             isClosable: true,
         }) as ComponentItem;
         editorGroup.setActiveComponentItem(tab, true);
+        activateFile(path);
         return;
     }
-    // Find the empty right-hand column from your initial layout.
+    // The editor row stays empty until a file is opened.
     const editorColumn = layout.rootItem.contentItems.find(
         (item) => item instanceof RowOrColumn && item.isColumn,
     );
@@ -180,8 +182,9 @@ function openFile(path: string) {
         console.error("Could not find the editor column");
         return;
     }
-    // Create the first editor group inside that column.
-    editorColumn.addItem(
+    const editorArea = editorColumn.contentItems.find(item => item.id === "editors");
+    if (!(editorArea instanceof RowOrColumn)) return;
+    editorArea.addItem(
         {
             type: "stack",
             header: {
@@ -201,6 +204,7 @@ function openFile(path: string) {
         },
         0,
     );
+    activateFile(path);
 }
 
 function closeDeletedEditors(deletedPath: string) {
@@ -239,10 +243,6 @@ onMounted(() => {
     const element = layoutContainer.value;
     if (!element) return;
     layout = new GoldenLayout(element);
-    layout.registerComponentFactoryFunction("empty", (container) => {
-        container.element.classList.add("panel-placeholder");
-        container.element.textContent = "Open a file from the explorer";
-    });
     layout.registerComponentFactoryFunction("explorer", (container) => {
         explorerTarget.value = container.element;
         container.on("destroy", () => {
@@ -313,9 +313,11 @@ onMounted(() => {
                     size: "83%",
                     isClosable: false,
                     content: [{
-                        type: "stack",
+                        type: "row",
+                        id: "editors",
                         size: "80%",
-                        content: [{ type: "component", componentType: "empty", title: "Editor", isClosable: false }],
+                        isClosable: false,
+                        content: [],
                     }],
                 },
             ],

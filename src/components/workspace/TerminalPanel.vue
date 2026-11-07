@@ -105,6 +105,47 @@ onBeforeUnmount(() => {
     <div ref="container" class="terminal-panel" />
 </template>
 
+<style>
+
+.xterm .xterm-viewport {
+background-color: #00000000 !important;
+}
+
+.xterm-viewport::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.xterm-viewport::-webkit-scrollbar-track,
+.xterm-viewport::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.xterm-viewport::-webkit-scrollbar-thumb {
+  background: rgb(129 146 179 / 40%);
+  border-radius: 999px;
+}
+
+.xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: rgb(105 165 255 / 65%);
+}
+
+.xterm-viewport::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@supports selector(::-webkit-scrollbar) {
+  .xterm-viewport {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+}
+
+
+</style>
+
 <style scoped>
 .terminal-panel {
     height: 100%;

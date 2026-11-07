@@ -114,7 +114,15 @@ async function saveFile() {
     }
 }
 
+function handleSave(event: KeyboardEvent) {
+    if (!props.active || event.defaultPrevented) return
+    if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 's') return
+    event.preventDefault()
+    void saveFile()
+}
+
 onMounted(async () => {
+    window.addEventListener('keydown', handleSave)
     await highlightingReady
 
     if (!editorContainer.value) return
@@ -171,6 +179,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
     unmounted = true
+    window.removeEventListener('keydown', handleSave)
     changeListener?.dispose()
     languageService?.dispose()
     editor?.dispose()

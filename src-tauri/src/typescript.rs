@@ -2,7 +2,7 @@ use std::io::{BufRead, BufReader, Read, Write};
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
-use tauri::{ipc::Channel, Manager, State};
+use tauri::{Manager, State, ipc::Channel};
 
 struct Server {
     child: Child,
@@ -47,14 +47,23 @@ pub fn typescript_start(
     let mut server = state.server.lock().map_err(|error| error.to_string())?;
     // A frontend reload needs a fresh channel and document state.
     server.take();
-    let script = app.path()
-        .resolve("typescript/tsserver.js", tauri::path::BaseDirectory::Resource)
+    let script = app
+        .path()
+        .resolve(
+            "typescript/tsserver.js",
+            tauri::path::BaseDirectory::Resource,
+        )
         .map_err(|error| error.to_string())?;
     if !script.is_file() {
-        return Err(format!("TypeScript server is missing: {}", script.display()));
+        return Err(format!(
+            "TypeScript server is missing: {}",
+            script.display()
+        ));
     }
     let mut command = server_command(&script);
-    let mut child = command.spawn().map_err(|error| format!("Could not start TypeScript. Install Node.js and restart Lux: {error}"))?;
+    let mut child = command.spawn().map_err(|error| {
+        format!("Could not start TypeScript. Install Node.js and restart Lux: {error}")
+    })?;
     let stdout = child.stdout.take().ok_or("Missing TypeScript output")?;
     let stderr = child.stderr.take().ok_or("Missing TypeScript errors")?;
     let errors = output.clone();
@@ -64,7 +73,8 @@ pub fn typescript_start(
                 Ok(line) => line,
                 Err(_) => break,
             };
-            let _ = errors.send(serde_json::json!({ "type": "event", "event": "serverError", "body": line }));
+            let _ = errors
+                .send(serde_json::json!({ "type": "event", "event": "serverError", "body": line }));
         }
     });
     *server = Some(Server { child });
@@ -74,7 +84,9 @@ pub fn typescript_start(
         loop {
             line.clear();
             let count = reader.read_line(&mut line).unwrap_or(0);
-            if count == 0 { break; }
+            if count == 0 {
+                break;
+            }
 
             let header = match line.strip_prefix("Content-Length: ") {
                 Some(header) => header,
@@ -85,11 +97,17 @@ pub fn typescript_start(
                 Err(_) => break,
             };
             line.clear();
-            if reader.read_line(&mut line).is_err() { break; }
+            if reader.read_line(&mut line).is_err() {
+                break;
+            }
             let mut body = vec![0; length];
-            if reader.read_exact(&mut body).is_err() { break; }
+            if reader.read_exact(&mut body).is_err() {
+                break;
+            }
             if let Ok(message) = serde_json::from_slice(&body) {
-                if output.send(message).is_err() { break; }
+                if output.send(message).is_err() {
+                    break;
+                }
             }
         }
         let _ = error_reader.join();
@@ -99,20 +117,24 @@ pub fn typescript_start(
 }
 
 #[tauri::command]
-pub fn typescript_send(
-    message: serde_json::Value,
-    state: State<TypeScript>,
-) -> Result<(), String> {
+pub fn typescript_send(message: serde_json::Value, state: State<TypeScript>) -> Result<(), String> {
     let mut server = state.server.lock().map_err(|error| error.to_string())?;
     let server = server.as_mut().ok_or("TypeScript server is not running")?;
-    let stdin = server.child.stdin.as_mut().ok_or("TypeScript input is closed")?;
+    let stdin = server
+        .child
+        .stdin
+        .as_mut()
+        .ok_or("TypeScript input is closed")?;
     writeln!(stdin, "{message}").map_err(|error| error.to_string())?;
     stdin.flush().map_err(|error| error.to_string())
 }
 
 #[tauri::command]
 pub fn typescript_stop(state: State<TypeScript>) -> Result<(), String> {
-    state.server.lock().map_err(|error| error.to_string())?.take();
+    state
+        .server
+        .lock()
+        .map_err(|error| error.to_string())?
+        .take();
     Ok(())
 }
-

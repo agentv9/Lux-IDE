@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import {
   computed,
-  onBeforeUnmount,
   nextTick,
   ref,
   shallowRef,
   useTemplateRef,
   watch,
+  onMounted,
+  onUnmounted,
 } from 'vue'
 import type {
   ContextMenuItem,
@@ -15,8 +16,10 @@ import type {
 } from '@nuxt/ui'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import { invoke } from '@tauri-apps/api/core'
+import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog'
 import { join } from '@tauri-apps/api/path'
+
 
 interface DirectoryEntry {
   name: string
@@ -171,10 +174,27 @@ async function openProject() {
   }
 }
 
-async function onItemSelect(
-  _event: unknown,
-  item: ExplorerItem,
-) {
+async function openFromContext(data: string) {
+
+  try {
+
+    const entries = await invoke<DirectoryEntry[]>('read_directory', {
+      path: data,
+    })
+
+    files.value = entries.map(toTreeItem)
+    refreshTree()
+    projectPath.value = data
+    emit('project-opened', data)
+    expanded.value = []
+    contextTarget.value = null
+  } catch (error) {
+    errorMessage.value = String(error)
+    console.error('Could not open project:', error)
+  }
+}
+
+async function onItemSelect(_event: unknown, item: ExplorerItem,) {
   if (item.isDraft || movingEntry.value || draggingPath.value) return
 
   if (!item.isDirectory) {
@@ -608,24 +628,24 @@ const { option } = useSortable(tree, files, {
     document.addEventListener('touchmove', trackPointer, true)
   },
 
-onMove(event, originalEvent) {
-  const point = pointerPosition(originalEvent)
+  onMove(event, originalEvent) {
+    const point = pointerPosition(originalEvent)
 
-  if (point) {
-    lastPointer = point
-  }
+    if (point) {
+      lastPointer = point
+    }
 
-  const hoveredItem = entryInRow(event.related)
+    const hoveredItem = entryInRow(event.related)
 
-  setDestination(
-    hoveredItem ? destinationFor(hoveredItem) : null,
-  )
+    setDestination(
+      hoveredItem ? destinationFor(hoveredItem) : null,
+    )
 
-  return true
-},
+    return true
+  },
 
   // Suppress VueUse's flat-array reorder: this is a filesystem tree.
-  onUpdate() {},
+  onUpdate() { },
 
   onEnd(event) {
     stopTracking()
@@ -650,7 +670,23 @@ watch([creatingFile, movingEntry], ([creating, moving]) => {
   option('disabled', creating || moving)
 })
 
-onBeforeUnmount(stopTracking)
+let unlistenContextMenu: UnlistenFn | null = null;
+
+onMounted(async () => {
+  // Listen for the path forwarded from the Windows registry execution
+  unlistenContextMenu = await listen('context-menu-path', (event) => {
+    const targetPath = event.payload; // This is the string path from Rust
+    if (targetPath) {
+      console.log(targetPath)
+      openFromContext(targetPath as string);
+    }
+  });
+});
+
+onUnmounted(() => {
+  if (unlistenContextMenu) unlistenContextMenu();
+  stopTracking
+});
 
 const items: DropdownMenuItem[][] = [
   [
@@ -678,16 +714,8 @@ const contextItems: ContextMenuItem[] = [
 <template>
   <main class="explorer">
     <div class="titlebar">
-      <UDropdownMenu
-        :items="items"
-        :content="{ align: 'start', side: 'right' }"
-      >
-        <UButton
-          color="neutral"
-          variant="link"
-          trailing-icon="i-tabler-menu-2"
-          aria-label="Project menu"
-        />
+      <UDropdownMenu :items="items" :content="{ align: 'start', side: 'right' }">
+        <UButton color="neutral" variant="link" trailing-icon="i-tabler-menu-2" aria-label="Project menu" />
       </UDropdownMenu>
 
       <p v-if="errorMessage" class="explorer-error">
@@ -696,62 +724,27 @@ const contextItems: ContextMenuItem[] = [
     </div>
 
     <div ref="explorerContent" class="explorer-content">
-      <UTree
-        ref="tree"
-        trailing-icon="none"
-        v-model:expanded="expanded"
-        :nested="false"
-        :unmount-on-hide="true"
-        :items="files"
-        :model-value="selectedFile"
-        :get-key="(item: ExplorerItem) => item.path"
-        @select="onItemSelect"
-      >
+      <UTree ref="tree" trailing-icon="none" v-model:expanded="expanded" :nested="false" :unmount-on-hide="true"
+        :items="files" :model-value="selectedFile" :get-key="(item: ExplorerItem) => item.path" @select="onItemSelect">
         <template #item="{ item, expanded: isExpanded }">
-          <div
-            v-if="item.isDraft"
-            class="explorer-entry"
-            data-draft
-            @click.stop
-            @dblclick.stop
-            @pointerdown.stop
-            @keydown.stop
-          >
-            <UIcon
-              name="i-tabler-file"
-              class="size-4 shrink-0"
-            />
+          <div v-if="item.isDraft" class="explorer-entry" data-draft @click.stop @dblclick.stop @pointerdown.stop
+            @keydown.stop>
+            <UIcon name="i-tabler-file" class="size-4 shrink-0" />
 
-            <UInput
-              v-model="value"
-              autofocus
-              size="xs"
-              class="min-w-0 flex-1"
-              :disabled="savingNewFile"
-              @keydown.enter.prevent="submitDraft(item)"
-              @keydown.esc.prevent="cancelDraft(item)"
-            />
+            <UInput v-model="value" autofocus size="xs" class="min-w-0 flex-1" :disabled="savingNewFile"
+              @keydown.enter.prevent="submitDraft(item)" @keydown.esc.prevent="cancelDraft(item)" />
           </div>
 
           <UContextMenu v-else :items="contextItems">
-            <div
-              class="explorer-entry"
-              :data-entry-path="item.path"
-              :class="{
-                'explorer-drop-target': item.isDirectory && dropDirectory === item.path,
-              }"
-              @contextmenu.capture="contextTarget = item"
-            >
-              <UIcon
-                :name="
-                  item.isDirectory
-                    ? isExpanded
-                      ? 'i-tabler-folder-open'
-                      : 'i-tabler-folder'
-                    : item.icon || 'i-tabler-file'
-                "
-                class="size-4 shrink-0"
-              />
+            <div class="explorer-entry" :data-entry-path="item.path" :class="{
+              'explorer-drop-target': item.isDirectory && dropDirectory === item.path,
+            }" @contextmenu.capture="contextTarget = item">
+              <UIcon :name="item.isDirectory
+                ? isExpanded
+                  ? 'i-tabler-folder-open'
+                  : 'i-tabler-folder'
+                : item.icon || 'i-tabler-file'
+                " class="size-4 shrink-0" />
 
               <span class="explorer-entry-label">
                 {{ item.label }}
@@ -761,14 +754,9 @@ const contextItems: ContextMenuItem[] = [
         </template>
       </UTree>
 
-      <div
-        v-if="projectPath"
-        data-project-root-drop
-        class="explorer-root-drop"
-        :class="{
-          'explorer-root-drop-active': draggingPath && dropDirectory === projectPath,
-        }"
-      >
+      <div v-if="projectPath" data-project-root-drop class="explorer-root-drop" :class="{
+        'explorer-root-drop-active': draggingPath && dropDirectory === projectPath,
+      }">
         <span v-if="draggingPath">Move to project root</span>
       </div>
     </div>
@@ -856,13 +844,13 @@ const contextItems: ContextMenuItem[] = [
   min-width: 0;
 }
 
-.explorer-entry > .iconify {
+.explorer-entry>.iconify {
   width: 16px;
   height: 16px;
   flex: 0 0 16px;
 }
 
-.explorer-drag-preview .explorer-entry > .iconify {
+.explorer-drag-preview .explorer-entry>.iconify {
   width: 16px;
   height: 16px;
   flex: 0 0 16px;
