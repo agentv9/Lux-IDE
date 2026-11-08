@@ -32,6 +32,7 @@
     "@tauri-apps/cli": "^2",
     "@types/sortablejs": "^1.15.9",
     "@vitejs/plugin-vue": "^6.0.7",
+    "material-icon-theme": "^5.40.0",
     "shiki": "^4.6.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.16",

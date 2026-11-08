@@ -19,7 +19,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog'
 import { join } from '@tauri-apps/api/path'
-
+import { getFileIcon } from "../../file-icons"
 
 interface DirectoryEntry {
   name: string
@@ -64,6 +64,7 @@ const contextTarget = shallowRef<ExplorerItem | null>(null)
 const errorMessage = ref('')
 const value = ref('')
 const creatingFile = ref(false)
+const renamingPath = ref<string | null>(null)
 const savingNewFile = ref(false)
 const movingEntry = ref(false)
 
@@ -195,7 +196,7 @@ async function openFromContext(data: string) {
 }
 
 async function onItemSelect(_event: unknown, item: ExplorerItem,) {
-  if (item.isDraft || movingEntry.value || draggingPath.value) return
+  if (creatingFile.value || item.isDraft || movingEntry.value || draggingPath.value) return
 
   if (!item.isDirectory) {
     emit('open-file', item.path)
@@ -230,55 +231,39 @@ async function onItemSelect(_event: unknown, item: ExplorerItem,) {
   }
 }
 
-async function createFile() {
+async function createEntry(isDirectory = false) {
+  if (!projectPath.value || creatingFile.value || movingEntry.value) return
+
   const target = contextTarget.value
-
-  if (!target || creatingFile.value || movingEntry.value) return
-
-  if (!target.isDirectory) {
-    errorMessage.value = 'Right-click a folder to create a file inside it.'
-    return
-  }
+  const parentPath = target ? destinationFor(target) : projectPath.value
+  if (!parentPath) return
 
   creatingFile.value = true
   errorMessage.value = ''
 
   try {
-    let parent = findItem(files.value, target.path)
-    if (!parent) {
-      creatingFile.value = false
-      return
-    }
-
-    if (parent.children === undefined) {
-      const entries = await invoke<DirectoryEntry[]>('read_directory', {
-        path: parent.path,
-      })
-
-      parent = findItem(files.value, target.path)
-
-      if (!parent) {
-        creatingFile.value = false
-        return
-      }
-
+    let parent = findItem(files.value, parentPath)
+    if (parent && parent.children === undefined) {
+      const entries = await invoke<DirectoryEntry[]>('read_directory', { path: parentPath })
+      parent = findItem(files.value, parentPath)
+      if (!parent) return
       parent.children = entries.map(toTreeItem)
     }
 
     const draft: ExplorerItem = {
-      label: 'New file',
+      label: isDirectory ? 'New folder' : 'New file',
       path: `draft:${crypto.randomUUID()}`,
-      isDirectory: false,
+      isDirectory,
       isDraft: true,
     }
 
     value.value = ''
-    parent.children = [draft, ...(parent.children ?? [])]
-
+    const siblings = parent?.children ?? files.value
+    siblings.unshift(draft)
     refreshTree()
     await nextTick()
 
-    if (!expanded.value.includes(parent.path)) {
+    if (parent && !expanded.value.includes(parent.path)) {
       expanded.value = [...expanded.value, parent.path]
     }
   } catch (error) {
@@ -287,39 +272,46 @@ async function createFile() {
   }
 }
 
+function renameEntry() {
+  const target = contextTarget.value
+  if (!target || creatingFile.value || movingEntry.value) return
+
+  renamingPath.value = target.path
+  value.value = String(target.label ?? '')
+  creatingFile.value = true
+  errorMessage.value = ''
+}
+
 function cancelDraft(draft: ExplorerItem) {
   if (savingNewFile.value) return
 
-  const parent = findParent(files.value, draft.path)
-
-  if (parent?.children) {
-    parent.children = parent.children.filter(
-      child => child.path !== draft.path,
-    )
-
+  if (!renamingPath.value) {
+    const parent = findParent(files.value, draft.path)
+    const siblings = parent?.children ?? files.value
+    const index = siblings.findIndex(child => child.path === draft.path)
+    if (index !== -1) siblings.splice(index, 1)
     refreshTree()
   }
 
+  renamingPath.value = null
   creatingFile.value = false
   value.value = ''
   errorMessage.value = ''
 }
 
 async function submitDraft(draft: ExplorerItem) {
-  if (savingNewFile.value) return
+  if (savingNewFile.value || !projectPath.value) return
 
   const parent = findParent(files.value, draft.path)
-  if (!parent) return
-
   const name = value.value.trim()
 
-  if (
-    !name ||
-    name === '.' ||
-    name === '..' ||
-    /[\\/]/.test(name)
-  ) {
-    errorMessage.value = 'Enter a valid filename without slashes.'
+  if (!name || name === '.' || name === '..' || /[\\/]/.test(name)) {
+    errorMessage.value = 'Enter a valid name without slashes.'
+    return
+  }
+
+  if (renamingPath.value && name === draft.label) {
+    cancelDraft(draft)
     return
   }
 
@@ -327,36 +319,34 @@ async function submitDraft(draft: ExplorerItem) {
   errorMessage.value = ''
 
   try {
-    const path = await join(parent.path, name)
+    const path = await join(parent?.path ?? projectPath.value, name)
+    const oldPath = draft.path
+    const renaming = Boolean(renamingPath.value)
 
-    await invoke('create_file', { path })
-
-    const currentParent = findParent(files.value, draft.path)
-
-    if (currentParent?.children) {
-      const index = currentParent.children.findIndex(
-        child => child.path === draft.path,
-      )
-
-      if (index !== -1) {
-        currentParent.children.splice(
-          index,
-          1,
-          toTreeItem({
-            name,
-            path,
-            isDirectory: false,
-          }),
-        )
-      }
-
-      refreshTree()
+    if (renaming) {
+      await invoke('move_entry', { oldPath, newPath: path })
+    } else {
+      await invoke(draft.isDirectory ? 'create_directory' : 'create_file', { path })
     }
 
+    const current = findItem(files.value, oldPath)
+    if (current) {
+      current.label = name
+      current.isDraft = false
+      updateEntryPaths(current, oldPath, path)
+    }
+    expanded.value = expanded.value.map(entry => replacePathPrefix(entry, oldPath, path))
+    refreshTree()
+    renamingPath.value = null
     creatingFile.value = false
     value.value = ''
+    contextTarget.value = null
 
-    emit('open-file', path)
+    if (renaming) {
+      emit('entry-moved', { oldPath, newPath: path, isDirectory: draft.isDirectory })
+    } else if (!draft.isDirectory) {
+      emit('open-file', path)
+    }
   } catch (error) {
     errorMessage.value = String(error)
   } finally {
@@ -697,11 +687,25 @@ const items: DropdownMenuItem[][] = [
   ],
 ]
 
-const contextItems: ContextMenuItem[] = [
+const creationItems: ContextMenuItem[] = [
   {
     label: 'Create File',
     icon: 'i-tabler-plus',
-    onSelect: () => createFile(),
+    onSelect: () => createEntry(),
+  },
+  {
+    label: 'Create Folder',
+    icon: 'i-tabler-folder-plus',
+    onSelect: () => createEntry(true),
+  },
+]
+
+const contextItems: ContextMenuItem[] = [
+  ...creationItems,
+  {
+    label: 'Rename',
+    icon: 'i-tabler-pencil',
+    onSelect: () => renameEntry(),
   },
   {
     label: 'Delete',
@@ -727,9 +731,9 @@ const contextItems: ContextMenuItem[] = [
       <UTree ref="tree" trailing-icon="none" v-model:expanded="expanded" :nested="false" :unmount-on-hide="true"
         :items="files" :model-value="selectedFile" :get-key="(item: ExplorerItem) => item.path" @select="onItemSelect">
         <template #item="{ item, expanded: isExpanded }">
-          <div v-if="item.isDraft" class="explorer-entry" data-draft @click.stop @dblclick.stop @pointerdown.stop
+          <div v-if="item.isDraft || renamingPath === item.path" class="explorer-entry" data-draft @click.stop @dblclick.stop @pointerdown.stop
             @keydown.stop>
-            <UIcon name="i-tabler-file" class="size-4 shrink-0" />
+            <UIcon :name="item.isDirectory ? 'i-tabler-folder' : 'i-tabler-file'" class="size-4 shrink-0" />
 
             <UInput v-model="value" autofocus size="xs" class="min-w-0 flex-1" :disabled="savingNewFile"
               @keydown.enter.prevent="submitDraft(item)" @keydown.esc.prevent="cancelDraft(item)" />
@@ -739,12 +743,7 @@ const contextItems: ContextMenuItem[] = [
             <div class="explorer-entry" :data-entry-path="item.path" :class="{
               'explorer-drop-target': item.isDirectory && dropDirectory === item.path,
             }" @contextmenu.capture="contextTarget = item">
-              <UIcon :name="item.isDirectory
-                ? isExpanded
-                  ? 'i-tabler-folder-open'
-                  : 'i-tabler-folder'
-                : item.icon || 'i-tabler-file'
-                " class="size-4 shrink-0" />
+              <img :src="getFileIcon(item.label ?? '', item.isDirectory, isExpanded)" alt="" class="size-4 shrink-0" />
 
               <span class="explorer-entry-label">
                 {{ item.label }}
@@ -754,11 +753,13 @@ const contextItems: ContextMenuItem[] = [
         </template>
       </UTree>
 
-      <div v-if="projectPath" data-project-root-drop class="explorer-root-drop" :class="{
-        'explorer-root-drop-active': draggingPath && dropDirectory === projectPath,
-      }">
-        <span v-if="draggingPath">Move to project root</span>
-      </div>
+      <UContextMenu v-if="projectPath" :items="creationItems">
+        <div data-project-root-drop class="explorer-root-drop" :class="{
+          'explorer-root-drop-active': draggingPath && dropDirectory === projectPath,
+        }" @contextmenu.capture="contextTarget = null">
+          <span v-if="draggingPath">Move to project root</span>
+        </div>
+      </UContextMenu>
     </div>
   </main>
 </template>

@@ -12,7 +12,7 @@
         <!-- 2. RIGHT-CLICK A FOLDER ICON               -->
         <!-- ========================================== -->
         <RegistryKey Root="HKCU" Key="Software\Classes\Directory\shell\lux" Action="createAndRemoveOnUninstall">
-          <RegistryValue Type="string" Value="Open with lux" />
+          <RegistryValue Type="string" Value="Open with Lux" />
           <RegistryValue Type="string" Name="Icon" Value="&quot;[INSTALLDIR]lux.exe&quot;,0" />
         </RegistryKey>
         <RegistryKey Root="HKCU" Key="Software\Classes\Directory\shell\lux\command" Action="createAndRemoveOnUninstall">
@@ -23,7 +23,7 @@
         <!-- 3. RIGHT-CLICK INSIDE A FOLDER BACKGROUND   -->
         <!-- ========================================== -->
         <RegistryKey Root="HKCU" Key="Software\Classes\Directory\Background\shell\lux" Action="createAndRemoveOnUninstall">
-          <RegistryValue Type="string" Value="Open with lux" />
+          <RegistryValue Type="string" Value="Open with Lux" />
           <RegistryValue Type="string" Name="Icon" Value="&quot;[INSTALLDIR]lux.exe&quot;,0" />
         </RegistryKey>
         <RegistryKey Root="HKCU" Key="Software\Classes\Directory\Background\shell\lux\command" Action="createAndRemoveOnUninstall">

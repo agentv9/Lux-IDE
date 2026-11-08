@@ -58,6 +58,7 @@ pub fn run() {
             utils::filesystem::read_file,
             utils::filesystem::write_file,
             utils::filesystem::create_file,
+            utils::filesystem::create_directory,
             utils::filesystem::delete_filedir,
             utils::filesystem::move_entry,
             terminal::terminal_open,

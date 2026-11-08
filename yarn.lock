@@ -1487,6 +1487,11 @@ chokidar@^5.0.0:
   dependencies:
     readdirp "^5.0.0"
 
+chroma-js@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/chroma-js/-/chroma-js-3.2.0.tgz#4e9e665290b9bbfece524fccf759d5120e351ff2"
+  integrity sha512-os/OippSlX1RlWWr+QDPcGUZs0uoqr32urfxESG9U93lhUfbnlyckte84Q8P1UQY/qth983AS1JONKmLS4T0nw==
+
 colortranslator@^5.0.0:
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/colortranslator/-/colortranslator-5.0.0.tgz#a7590fa56702c2be75e4fec755127cb658385583"
@@ -2107,6 +2112,13 @@ marked@^17.0.1:
   version "17.0.6"
   resolved "https://registry.yarnpkg.com/marked/-/marked-17.0.6.tgz#2a97586a272d3be5880f198e020b74ad27cf86ba"
   integrity sha512-gB0gkNafnonOw0obSTEGZTT86IuhILt2Wfx0mWH/1Au83kybTayroZ/V6nS25mN7u8ASy+5fMhgB3XPNrOZdmA==
+
+material-icon-theme@^5.40.0:
+  version "5.40.0"
+  resolved "https://registry.yarnpkg.com/material-icon-theme/-/material-icon-theme-5.40.0.tgz#3ffad32f5a2afeefc243b38799ed526189ccbae3"
+  integrity sha512-IrvgusbwtqxhUtVgUy0nToJcfN7CYVRdbBxKMfbo0vab9flVBHA5INZ9UiE5SgRj+PM6opCl5nn5TZdpm2UaxA==
+  dependencies:
+    chroma-js "^3.2.0"
 
 mdast-util-to-hast@^13.0.0:
   version "13.2.1"

@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "lux",
+  "productName": "Lux",
   "version": "0.1.0",
   "identifier": "com.kaseknife95.lux",
   "build": {

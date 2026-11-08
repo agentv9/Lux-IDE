@@ -58,6 +58,11 @@ pub fn create_file(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn create_directory(path: String) -> Result<(), String> {
+    fs::create_dir(&path).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
 pub fn delete_filedir(path: String) -> Result<(), String> {
     //Check if is file or dir, for now if dir ignore, if file delete.
 
